@@ -174,7 +174,7 @@ export default function Configuracion({
 
 
   const handleDeleteAllClick = () => {
-    if (confirm(`¿Estás seguro de eliminar los ${entries.length} registro(s) de score? Esta acción no se puede deshacer.`)) {
+    if (confirm(`¿Estás seguro de eliminar los ${entries.length} registro(s) de puntaje? Esta acción no se puede deshacer.`)) {
       onDeleteAllEntries();
     }
   };
@@ -451,7 +451,7 @@ export default function Configuracion({
               Borrar Registros
             </h3>
             <p className="text-xs text-subtext font-light leading-relaxed">
-              ¿Quieres eliminar permanentemente todos los registros de score guardados? Esta acción no se puede deshacer.
+              ¿Quieres eliminar permanentemente todos los registros de puntaje guardados? Esta acción no se puede deshacer.
             </p>
 
             <button

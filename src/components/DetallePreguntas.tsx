@@ -200,7 +200,7 @@ export default function DetallePreguntas({
       <div>
         <h2 className="text-2xl font-light font-serif text-white tracking-wide">Análisis de Preguntas</h2>
         <p className="text-xs text-subtext font-light mt-1">
-          Al registrar un test en "Registro de Scores", sus preguntas aparecen automáticamente aquí abajo. Solo completa el % de logro de tu reporte de APEUni para cada una.
+          Al registrar un test en "Registro de Puntaje", sus preguntas aparecen automáticamente aquí abajo. Solo completa el % de logro de tu reporte de APEUni para cada una.
         </p>
       </div>
 

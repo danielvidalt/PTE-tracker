@@ -235,7 +235,7 @@ export default function App() {
               }`}
             >
               <FileText size={15} />
-              Registro de Scores
+              Registro de Puntaje
             </button>
 
             <button
