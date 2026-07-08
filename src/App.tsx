@@ -247,7 +247,7 @@ export default function App() {
               }`}
             >
               <Network size={15} />
-              Score Analysis (Items)
+              Análisis de Preguntas
             </button>
 
             <button
@@ -296,6 +296,7 @@ export default function App() {
               onAddEntry={handleAddEntry}
               onAddMultipleEntries={handleAddMultipleEntries}
               onDeleteEntry={handleDeleteEntry}
+              onGoToAnalysis={() => setActiveTab('preguntas')}
             />
           )}
 

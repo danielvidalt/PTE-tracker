@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { PTEEntry, SkillTargets, QuestionType } from '../types';
-import { Plus, Trash2, SlidersHorizontal, BookOpen, AlertCircle, Sparkles } from 'lucide-react';
+import { Plus, Trash2, SlidersHorizontal, BookOpen, AlertCircle, Sparkles, ClipboardList, X } from 'lucide-react';
 import { formatLocalPlainDate } from './Dashboard';
 
 interface RegistroProps {
@@ -10,6 +11,7 @@ interface RegistroProps {
   onAddEntry: (entry: Omit<PTEEntry, 'id'>) => void;
   onAddMultipleEntries: (entries: Array<Omit<PTEEntry, 'id'>>) => void;
   onDeleteEntry: (id: string) => void;
+  onGoToAnalysis: () => void;
 }
 
 const SKILL_COLORS: Record<string, string> = {
@@ -27,6 +29,7 @@ export default function Registro({
   onAddEntry,
   onAddMultipleEntries,
   onDeleteEntry,
+  onGoToAnalysis,
 }: RegistroProps) {
   // Form single entry state
   const [fecha, setFecha] = useState(() => new Date().toISOString().split('T')[0]);
@@ -50,6 +53,16 @@ export default function Registro({
 
   // Sidebar reference table collapsed state
   const [showRefTable, setShowRefTable] = useState(false);
+
+  // Floating reminder to complete Análisis de Preguntas after saving a test
+  const [showAnalysisReminder, setShowAnalysisReminder] = useState(false);
+  const reminderTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const triggerAnalysisReminder = () => {
+    if (reminderTimeoutRef.current) clearTimeout(reminderTimeoutRef.current);
+    setShowAnalysisReminder(true);
+    reminderTimeoutRef.current = setTimeout(() => setShowAnalysisReminder(false), 10000);
+  };
 
   // Suggestions for 'detalle' based on existing entries
   const suggestions = useMemo(() => {
@@ -78,6 +91,11 @@ export default function Registro({
       puntaje: parsedPuntaje,
       notas: notas.trim() || undefined,
     });
+
+    // Section/Question Test entries with a real skill auto-list items in Análisis de Preguntas
+    if (tipo !== 'Question Test' && skill !== 'Overall') {
+      triggerAnalysisReminder();
+    }
 
     // Reset some fields
     setPuntaje('');
@@ -125,6 +143,9 @@ export default function Registro({
     ];
 
     onAddMultipleEntries(newEntries);
+
+    // Full Test always auto-lists items for all 4 skills in Análisis de Preguntas
+    triggerAnalysisReminder();
 
     // Reset scores fields
     setFullOverall('');
@@ -589,6 +610,41 @@ export default function Registro({
           </div>
         )}
       </div>
+
+      {/* Floating reminder to complete the item breakdown in Análisis de Preguntas.
+          Rendered via portal to document.body: an ancestor uses a transform-based
+          fade-in animation, which would otherwise turn this fixed toast into one
+          positioned relative to that ancestor instead of the viewport. */}
+      {showAnalysisReminder && createPortal(
+        <div className="fixed bottom-6 right-6 z-50 max-w-sm bg-card-dark border border-gold/40 rounded-sm shadow-2xl shadow-black/40 p-4 flex items-start gap-3 animate-fade-in">
+          <ClipboardList className="text-gold shrink-0 mt-0.5" size={20} />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-white">¡Registro guardado!</p>
+            <p className="text-xs text-subtext font-light mt-1 leading-relaxed">
+              Recuerda completar el detalle por pregunta en <strong className="text-gold">Análisis de Preguntas</strong> con tu reporte de APEUni.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setShowAnalysisReminder(false);
+                onGoToAnalysis();
+              }}
+              className="mt-3 flex items-center gap-1.5 px-3 py-1.5 bg-gold/10 hover:bg-gold/20 text-gold border border-gold/30 rounded-sm text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer"
+            >
+              Completar Ahora
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowAnalysisReminder(false)}
+            className="text-[#555] hover:text-white transition-colors cursor-pointer shrink-0"
+            title="Cerrar"
+          >
+            <X size={16} />
+          </button>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

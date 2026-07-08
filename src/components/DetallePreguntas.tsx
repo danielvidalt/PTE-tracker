@@ -198,7 +198,7 @@ export default function DetallePreguntas({
     <div className="space-y-8">
       {/* Intro */}
       <div>
-        <h2 className="text-2xl font-light font-serif text-white tracking-wide">Análisis Detallado por Pregunta (Score Analysis)</h2>
+        <h2 className="text-2xl font-light font-serif text-white tracking-wide">Análisis de Preguntas</h2>
         <p className="text-xs text-subtext font-light mt-1">
           Al registrar un test en "Registro de Scores", sus preguntas aparecen automáticamente aquí abajo. Solo completa el % de logro de tu reporte de APEUni para cada una.
         </p>
@@ -451,7 +451,7 @@ export default function DetallePreguntas({
           <div>
             <h4 className="font-serif font-light text-white flex items-center gap-2 mb-3 text-md tracking-wide">
               <Sparkles className="text-gold" size={16} />
-              Guía del Score Analysis
+              Guía del Análisis de Preguntas
             </h4>
             <p className="text-xs text-subtext leading-relaxed font-light mb-4">
               En plataformas de práctica como <strong>APEUni</strong>, tras rendir un simulacro se te entrega un desglose detallado. Haz clic en cada concepto para ver su explicación:
