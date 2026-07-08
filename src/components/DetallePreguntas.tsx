@@ -19,6 +19,16 @@ const SKILL_COLORS: Record<string, string> = {
   Writing: '#D65A9C',   // elegante oro rosa/magenta
 };
 
+// Automatic pass/fail status vs. the item's target, shared by pending and historical rows
+const getStatus = (correctness: number | null, target: number | null): { label: string; badgeClass: string } => {
+  if (target === null) return { label: 'Sin Meta', badgeClass: 'text-[#555]' };
+  if (correctness === null) return { label: 'Sin Datos', badgeClass: 'text-[#555]' };
+  const diffPct = Math.round(correctness * 100) - Math.round(target * 100);
+  if (diffPct > 0) return { label: 'Bueno', badgeClass: 'text-emerald-400 font-semibold' };
+  if (diffPct === 0) return { label: 'Igual a lo requerido', badgeClass: 'text-amber-400 font-semibold' };
+  return { label: 'Malo', badgeClass: 'text-rose-500 font-semibold' };
+};
+
 export default function DetallePreguntas({
   questionDetails,
   questionTypes,
@@ -294,6 +304,26 @@ export default function DetallePreguntas({
                               <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-gold">%</span>
                             </div>
                           </div>
+                          <div className="flex items-center gap-1.5">
+                            <label className="text-[10px] text-subtext uppercase font-bold">Meta</label>
+                            {itemType?.target !== null && itemType?.target !== undefined ? (
+                              <span className="text-xs font-semibold text-subtext bg-[#111] border border-border-dark px-1.5 py-1 rounded-sm">
+                                {(itemType.target * 100).toFixed(0)}%
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-[#555] italic">No fijada</span>
+                            )}
+                          </div>
+                          {(() => {
+                            const correctnessNum = parseFloat(draft.correctness);
+                            const liveCorrectness = isNaN(correctnessNum) ? null : correctnessNum / 100;
+                            const status = getStatus(liveCorrectness, itemType?.target ?? null);
+                            return (
+                              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm border border-current/20 ${status.badgeClass}`}>
+                                {status.label}
+                              </span>
+                            );
+                          })()}
                           <input
                             type="text"
                             placeholder="Notas (opcional)"
@@ -602,25 +632,8 @@ export default function DetallePreguntas({
                 {filteredDetails.map(d => {
                   const itemType = questionTypes.find(q => q.code === d.item);
                   const target = itemType ? itemType.target : null;
-                  
-                  let diff = null;
-                  let statusLabel = '';
-                  let statusBadgeClass = '';
-                  if (target !== null) {
-                    diff = d.correctness - target;
-                    const diffPct = Math.round(d.correctness * 100) - Math.round(target * 100);
-                    if (diffPct > 0) {
-                      statusLabel = 'Mayor a lo requerido';
-                      statusBadgeClass = 'text-emerald-400 font-semibold';
-                    } else if (diffPct === 0) {
-                      statusLabel = 'Igual a lo requerido';
-                      statusBadgeClass = 'text-amber-400 font-semibold';
-                    } else {
-                      statusLabel = 'Menor a lo requerido';
-                      statusBadgeClass = 'text-rose-500 font-semibold';
-                    }
-                  }
-
+                  const diff = target !== null ? d.correctness - target : null;
+                  const status = getStatus(d.correctness, target);
                   const skillColor = SKILL_COLORS[d.skill] || '#C5A059';
 
                   return (
@@ -675,15 +688,9 @@ export default function DetallePreguntas({
                         )}
                       </td>
                       <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                        {target !== null ? (
-                          <span className={`text-[10px] font-bold uppercase tracking-wider ${statusBadgeClass}`}>
-                            {statusLabel}
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#555]">
-                            Sin Meta
-                          </span>
-                        )}
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${status.badgeClass}`}>
+                          {status.label}
+                        </span>
                       </td>
                       <td className="py-3.5 px-4 text-xs text-subtext max-w-xs truncate font-light" title={d.notas}>
                         {d.notas || '-'}
