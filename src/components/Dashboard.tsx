@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from 'recharts';
-import { Calendar, Target, Award, TrendingUp, HelpCircle } from 'lucide-react';
+import { Calendar, Target, Award, TrendingUp, HelpCircle, ClipboardCheck } from 'lucide-react';
 
 interface DashboardProps {
   entries: PTEEntry[];
@@ -123,6 +123,34 @@ export default function Dashboard({ entries, targets }: DashboardProps) {
     
     return result;
   }, [entries, targets]);
+
+  // 2b. Most recent Full Test session (all 5 scores loaded together)
+  const lastFullTestSession = useMemo(() => {
+    const fullTestEntries = entries.filter(e => e.tipo === 'Full Test');
+    if (fullTestEntries.length === 0) return null;
+
+    const groups = new Map<string, PTEEntry[]>();
+    fullTestEntries.forEach(e => {
+      const key = `${e.fecha}|${e.detalle}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(e);
+    });
+
+    const latestGroup = Array.from(groups.values()).sort((a, b) => {
+      const fechaDiff = new Date(b[0].fecha).getTime() - new Date(a[0].fecha).getTime();
+      if (fechaDiff !== 0) return fechaDiff;
+      return b[0].id.localeCompare(a[0].id);
+    })[0];
+
+    const scoresBySkill: Partial<Record<PTEEntry['skill'], PTEEntry>> = {};
+    latestGroup.forEach(e => { scoresBySkill[e.skill] = e; });
+
+    return {
+      fecha: latestGroup[0].fecha,
+      detalle: latestGroup[0].detalle,
+      scores: scoresBySkill,
+    };
+  }, [entries]);
 
   // 3. Prepare chart data per skill
   const chartDataBySkill = useMemo(() => {
@@ -335,6 +363,64 @@ export default function Dashboard({ entries, targets }: DashboardProps) {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Last Full Test Session Card */}
+      <div className="bg-card-dark rounded-sm border border-border-dark overflow-hidden">
+        <div className="p-6 border-b border-border-dark flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-[#080808]">
+          <div>
+            <h3 className="text-md uppercase tracking-[0.2em] font-semibold text-white font-serif flex items-center gap-2">
+              <ClipboardCheck className="text-gold" size={18} />
+              Último Simulacro Completo
+            </h3>
+            <p className="text-xs text-subtext mt-1 font-light">
+              {lastFullTestSession ? lastFullTestSession.detalle : 'Los 5 puntajes de tu Full Test más reciente.'}
+            </p>
+          </div>
+          {lastFullTestSession && (
+            <span className="text-xs font-semibold text-gold bg-gold/10 border border-gold/20 px-3 py-1.5 rounded-sm self-start sm:self-auto whitespace-nowrap">
+              {formatLocalPlainDate(lastFullTestSession.fecha)}
+            </span>
+          )}
+        </div>
+
+        {lastFullTestSession ? (
+          <div className="grid grid-cols-2 sm:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-border-dark">
+            {(['Overall', 'Listening', 'Reading', 'Speaking', 'Writing'] as const).map(skill => {
+              const entry = lastFullTestSession.scores[skill];
+              const target = skill === 'Overall' ? targets.Overall : targets[skill];
+              const score = entry ? entry.puntaje : null;
+              const diff = score !== null && target !== null ? score - target : null;
+              const color = SKILL_COLORS[skill];
+
+              return (
+                <div key={skill} className="p-4 text-center">
+                  <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color }}>
+                    {skill === 'Overall' ? 'Overall (General)' : skill}
+                  </p>
+                  <p className="text-2xl font-serif font-light text-white mt-1.5">
+                    {score !== null ? score : <span className="text-sm text-[#555] italic">Sin datos</span>}
+                  </p>
+                  {target !== null && diff !== null ? (
+                    <p className={`text-[11px] font-semibold mt-1 ${
+                      diff > 0 ? 'text-emerald-400' : diff === 0 ? 'text-amber-400' : 'text-rose-500'
+                    }`}>
+                      {diff >= 0 ? `+${diff}` : diff} vs. meta {target}
+                    </p>
+                  ) : (
+                    <p className="text-[11px] text-[#555] mt-1">Sin meta</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="p-8 text-center text-subtext bg-[#0d0d0d]">
+            <HelpCircle className="mx-auto mb-2 text-[#444]" size={28} />
+            <p className="text-sm font-medium">Aún no registras un Simulacro Completo</p>
+            <p className="text-xs text-[#555] mt-1">Ve a "Registro de Puntaje" y carga los 5 puntajes de un Full Test.</p>
+          </div>
+        )}
       </div>
 
       {/* KPIs Table Card */}
