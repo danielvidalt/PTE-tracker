@@ -122,15 +122,6 @@ export default function App() {
     setQuestionTypes(updatedTypes);
   };
 
-  // Reset to seed data
-  const handleResetToSeed = () => {
-    localStorage.removeItem(STORAGE_KEY);
-    setSkillTargets(INITIAL_SKILL_TARGETS);
-    setQuestionTypes(INITIAL_QUESTION_TYPES);
-    setEntries(INITIAL_ENTRIES);
-    setQuestionDetails(INITIAL_QUESTION_DETAILS);
-  };
-
   // Load from backup file
   const handleImportBackup = (backup: {
     entries: PTEEntry[];
@@ -257,7 +248,6 @@ export default function App() {
               onAddEntry={handleAddEntry}
               onAddMultipleEntries={handleAddMultipleEntries}
               onDeleteEntry={handleDeleteEntry}
-              onDeleteAllEntries={handleDeleteAllEntries}
             />
           )}
 
@@ -283,7 +273,7 @@ export default function App() {
               questionTypes={questionTypes}
               onUpdateTargets={handleUpdateTargets}
               onUpdateQuestionTypes={handleUpdateQuestionTypes}
-              onResetToSeed={handleResetToSeed}
+              onDeleteAllEntries={handleDeleteAllEntries}
               entries={entries}
               questionDetails={questionDetails}
             />

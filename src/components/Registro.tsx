@@ -10,7 +10,6 @@ interface RegistroProps {
   onAddEntry: (entry: Omit<PTEEntry, 'id'>) => void;
   onAddMultipleEntries: (entries: Array<Omit<PTEEntry, 'id'>>) => void;
   onDeleteEntry: (id: string) => void;
-  onDeleteAllEntries: () => void;
 }
 
 const SKILL_COLORS: Record<string, string> = {
@@ -28,7 +27,6 @@ export default function Registro({
   onAddEntry,
   onAddMultipleEntries,
   onDeleteEntry,
-  onDeleteAllEntries,
 }: RegistroProps) {
   // Form single entry state
   const [fecha, setFecha] = useState(() => new Date().toISOString().split('T')[0]);
@@ -449,19 +447,6 @@ export default function Registro({
 
           {/* Filters controls */}
           <div className="flex flex-wrap items-center gap-3">
-            {entries.length > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (confirm(`¿Estás seguro de eliminar los ${entries.length} registro(s)? Esta acción no se puede deshacer.`)) {
-                    onDeleteAllEntries();
-                  }
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/5 hover:bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:border-rose-500/40 rounded-sm text-[10px] font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer"
-              >
-                <Trash2 size={13} /> Borrar Todos
-              </button>
-            )}
             <div>
               <input
                 type="text"

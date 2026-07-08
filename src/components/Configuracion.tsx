@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { SkillTargets, QuestionType, PTEEntry, QuestionDetail } from '../types';
-import { Save, RotateCcw, CheckCircle, AlertTriangle, GraduationCap } from 'lucide-react';
+import { Save, Trash2, CheckCircle, AlertTriangle, GraduationCap } from 'lucide-react';
 
 interface ConfiguracionProps {
   targets: SkillTargets;
   questionTypes: QuestionType[];
   onUpdateTargets: (targets: SkillTargets) => void;
   onUpdateQuestionTypes: (types: QuestionType[]) => void;
-  onResetToSeed: () => void;
+  onDeleteAllEntries: () => void;
   entries: PTEEntry[];
   questionDetails: QuestionDetail[];
 }
@@ -75,7 +75,7 @@ export default function Configuracion({
   questionTypes,
   onUpdateTargets,
   onUpdateQuestionTypes,
-  onResetToSeed,
+  onDeleteAllEntries,
   entries,
   questionDetails,
 }: ConfiguracionProps) {
@@ -173,11 +173,9 @@ export default function Configuracion({
 
 
 
-  const handleResetClick = () => {
-    if (confirm('¿Estás seguro de reiniciar a los datos iniciales de ejemplo? Esto borrará tus datos actuales.')) {
-      onResetToSeed();
-      // Re-sync after reset is handled by parent, but let's reload to let parent update states
-      window.location.reload();
+  const handleDeleteAllClick = () => {
+    if (confirm(`¿Estás seguro de eliminar los ${entries.length} registro(s) de score? Esta acción no se puede deshacer.`)) {
+      onDeleteAllEntries();
     }
   };
 
@@ -446,21 +444,22 @@ export default function Configuracion({
         {/* BACKUPS & RESET SEEDS COLUMN */}
         <div className="space-y-6">
 
-          {/* Clean / Reset to seed data */}
+          {/* Delete all score entries */}
           <div className="bg-card-dark p-6 rounded-sm border border-border-dark space-y-4">
             <h3 className="font-serif font-light text-white text-md tracking-wide flex items-center gap-2">
-              <RotateCcw className="text-rose-400" size={18} />
-              Datos de Demostración
+              <Trash2 className="text-rose-400" size={18} />
+              Borrar Registros
             </h3>
             <p className="text-xs text-subtext font-light leading-relaxed">
-              ¿Quieres borrar el progreso actual y volver a los datos de ejemplo que se cargaron la primera vez? Esto es útil para experimentar con la visualización.
+              ¿Quieres eliminar permanentemente todos los registros de score guardados? Esta acción no se puede deshacer.
             </p>
 
             <button
-              onClick={handleResetClick}
-              className="w-full bg-rose-500/5 hover:bg-rose-500/10 text-rose-400 py-2.5 px-4 rounded-sm text-xs font-bold uppercase tracking-wider transition-all duration-300 border border-rose-500/20 hover:border-rose-500/40 cursor-pointer flex items-center justify-center gap-1.5"
+              onClick={handleDeleteAllClick}
+              disabled={entries.length === 0}
+              className="w-full bg-rose-500/5 hover:bg-rose-500/10 disabled:opacity-40 disabled:cursor-not-allowed text-rose-400 py-2.5 px-4 rounded-sm text-xs font-bold uppercase tracking-wider transition-all duration-300 border border-rose-500/20 hover:border-rose-500/40 cursor-pointer flex items-center justify-center gap-1.5"
             >
-              <RotateCcw size={14} /> Restaurar Semilla de Ejemplo
+              <Trash2 size={14} /> Borrar Todos los Registros
             </button>
           </div>
 
