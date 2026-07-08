@@ -12,11 +12,10 @@ import DetallePreguntas from './components/DetallePreguntas';
 import DetalleBandas from './components/DetalleBandas';
 import Configuracion from './components/Configuracion';
 import { 
-  LayoutDashboard, 
-  FileText, 
-  Settings, 
-  ShieldCheck, 
-  Compass, 
+  LayoutDashboard,
+  FileText,
+  Settings,
+  Compass,
   Network, 
   BookOpen, 
   GraduationCap
@@ -141,23 +140,13 @@ export default function App() {
       
       {/* Upper Brand Nav Header */}
       <header className="bg-bg-dark border-b border-border-dark-light pb-6 pt-8 shrink-0">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-          <div className="flex flex-col">
-            <span className="text-[10px] uppercase tracking-[0.4em] text-gold font-bold mb-1">
-              {skillTargets.goalName || 'Visa 482 Sponsorship Prep'}
-            </span>
-            <h1 className="text-3xl md:text-4xl font-light tracking-tight font-serif text-white">
-              PTE <span className="italic text-gold">Mastery</span> Dashboard
-            </h1>
-          </div>
-          
-          <div className="flex flex-col sm:items-end gap-1">
-            <span className="text-[10px] uppercase tracking-widest text-subtext font-semibold">Almacenamiento Local (Offline)</span>
-            <div className="flex items-center gap-1.5 text-xs font-medium text-[#E5E5E5]">
-              <ShieldCheck className="text-gold animate-pulse" size={14} />
-              <span>Estado Seguro</span>
-            </div>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 flex flex-col">
+          <span className="text-[10px] uppercase tracking-[0.4em] text-gold font-bold mb-1">
+            {skillTargets.goalName || 'Visa 482 Sponsorship Prep'}
+          </span>
+          <h1 className="text-3xl md:text-4xl font-light tracking-tight font-serif text-white">
+            PTE <span className="italic text-gold">Mastery</span> Dashboard
+          </h1>
         </div>
       </header>
 
