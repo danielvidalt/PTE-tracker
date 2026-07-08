@@ -251,6 +251,7 @@ export default function App() {
               questionTypes={questionTypes}
               onAddDetail={handleAddDetail}
               onDeleteDetail={handleDeleteDetail}
+              onDeleteAllDetails={handleDeleteAllDetails}
             />
           )}
 
@@ -268,7 +269,6 @@ export default function App() {
               onUpdateTargets={handleUpdateTargets}
               onUpdateQuestionTypes={handleUpdateQuestionTypes}
               onDeleteAllEntries={handleDeleteAllEntries}
-              onDeleteAllDetails={handleDeleteAllDetails}
               entries={entries}
               questionDetails={questionDetails}
             />

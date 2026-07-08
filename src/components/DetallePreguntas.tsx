@@ -8,6 +8,7 @@ interface DetallePreguntasProps {
   questionTypes: QuestionType[];
   onAddDetail: (detail: Omit<QuestionDetail, 'id'>) => void;
   onDeleteDetail: (id: string) => void;
+  onDeleteAllDetails: () => void;
 }
 
 const SKILL_COLORS: Record<string, string> = {
@@ -22,6 +23,7 @@ export default function DetallePreguntas({
   questionTypes,
   onAddDetail,
   onDeleteDetail,
+  onDeleteAllDetails,
 }: DetallePreguntasProps) {
   // Form states
   const [fecha, setFecha] = useState(() => new Date().toISOString().split('T')[0]);
@@ -336,6 +338,19 @@ export default function DetallePreguntas({
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            {questionDetails.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm(`¿Estás seguro de eliminar los ${questionDetails.length} desglose(s) del historial? Esta acción no se puede deshacer.`)) {
+                    onDeleteAllDetails();
+                  }
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/5 hover:bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:border-rose-500/40 rounded-sm text-[10px] font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer"
+              >
+                <Trash2 size={13} /> Borrar Todos
+              </button>
+            )}
             <div>
               <select
                 value={filterSkill}
