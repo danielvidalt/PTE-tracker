@@ -35,4 +35,7 @@ export interface QuestionDetail {
   contribute: number; // e.g. 0.31 for 31%
   correctness: number; // e.g. 0.182 for 18.2%
   notas?: string;
+  entryId?: string; // links back to the PTEEntry (test/section) that generated this item automatically
+  entryDetalle?: string; // name of the source test, for display grouping
+  completed?: boolean; // false = auto-generated placeholder still awaiting real results
 }

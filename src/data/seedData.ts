@@ -95,7 +95,10 @@ export const INITIAL_QUESTION_DETAILS: QuestionDetail[] = [
     item: 'DI',
     contribute: 0.31,
     correctness: 0.182,
-    notas: 'Describe Image'
+    notas: 'Describe Image',
+    entryId: 'entry-6',
+    entryDetalle: 'Speaking Section Test 44C',
+    completed: true
   },
   {
     id: 'qdetail-2',
@@ -104,7 +107,10 @@ export const INITIAL_QUESTION_DETAILS: QuestionDetail[] = [
     item: 'SGD',
     contribute: 0.19,
     correctness: 0.272,
-    notas: 'Summarize Group Discussion'
+    notas: 'Summarize Group Discussion',
+    entryId: 'entry-6',
+    entryDetalle: 'Speaking Section Test 44C',
+    completed: true
   },
   {
     id: 'qdetail-3',
@@ -113,7 +119,10 @@ export const INITIAL_QUESTION_DETAILS: QuestionDetail[] = [
     item: 'RS',
     contribute: 0.16,
     correctness: 0.544,
-    notas: 'Repeat Sentence'
+    notas: 'Repeat Sentence',
+    entryId: 'entry-6',
+    entryDetalle: 'Speaking Section Test 44C',
+    completed: true
   },
   {
     id: 'qdetail-4',
@@ -122,7 +131,10 @@ export const INITIAL_QUESTION_DETAILS: QuestionDetail[] = [
     item: 'RTS',
     contribute: 0.13,
     correctness: 0.378,
-    notas: 'Respond To A Situation'
+    notas: 'Respond To A Situation',
+    entryId: 'entry-6',
+    entryDetalle: 'Speaking Section Test 44C',
+    completed: true
   },
   {
     id: 'qdetail-5',
@@ -131,7 +143,10 @@ export const INITIAL_QUESTION_DETAILS: QuestionDetail[] = [
     item: 'RL',
     contribute: 0.13,
     correctness: 0.156,
-    notas: 'Retell Lecture'
+    notas: 'Retell Lecture',
+    entryId: 'entry-6',
+    entryDetalle: 'Speaking Section Test 44C',
+    completed: true
   },
   {
     id: 'qdetail-6',
@@ -140,6 +155,9 @@ export const INITIAL_QUESTION_DETAILS: QuestionDetail[] = [
     item: 'RA',
     contribute: 0.09,
     correctness: 0.467,
-    notas: 'Read Aloud'
+    notas: 'Read Aloud',
+    entryId: 'entry-6',
+    entryDetalle: 'Speaking Section Test 44C',
+    completed: true
   }
 ];

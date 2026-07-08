@@ -67,6 +67,37 @@ export default function App() {
   // ID Helper
   const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
 
+  // Auto-generate pending Score Analysis items for every question type of a skill,
+  // so the user only has to fill in results instead of adding them one by one.
+  const generateDetailStubs = (
+    entryId: string,
+    entryDetalle: string,
+    fecha: string,
+    skill: PTEEntry['skill'],
+    currentQuestionTypes: QuestionType[],
+    currentDetails: QuestionDetail[]
+  ): QuestionDetail[] => {
+    if (skill === 'Overall') return [];
+    return currentQuestionTypes
+      .filter(q => q.skill === skill)
+      .map((item, index) => {
+        const pastDetails = currentDetails
+          .filter(d => d.item === item.code && d.completed !== false)
+          .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+        return {
+          id: `${generateId('qdetail')}-${index}`,
+          fecha,
+          skill,
+          item: item.code,
+          contribute: pastDetails[0]?.contribute ?? 0,
+          correctness: 0,
+          entryId,
+          entryDetalle,
+          completed: false,
+        };
+      });
+  };
+
   // ACTIONS
 
   // Add a single PTE score entry
@@ -76,6 +107,15 @@ export default function App() {
       id: generateId('entry'),
     };
     setEntries(prev => [entryWithId, ...prev]);
+
+    // Section Test / Question Test single-skill entries: auto-list that skill's items.
+    // Question Test is for practicing one specific item, so it's excluded here.
+    if (entryWithId.tipo !== 'Question Test') {
+      setQuestionDetails(prev => [
+        ...generateDetailStubs(entryWithId.id, entryWithId.detalle, entryWithId.fecha, entryWithId.skill, questionTypes, prev),
+        ...prev,
+      ]);
+    }
   };
 
   // Add multiple PTE score entries (used for Full Test shortcut)
@@ -85,6 +125,14 @@ export default function App() {
       id: `${generateId('entry')}-${index}`,
     }));
     setEntries(prev => [...entriesWithIds, ...prev]);
+
+    // Full Test: auto-list every item across all 4 skills.
+    setQuestionDetails(prev => {
+      const stubs = entriesWithIds.flatMap(e =>
+        generateDetailStubs(e.id, e.detalle, e.fecha, e.skill, questionTypes, prev)
+      );
+      return [...stubs, ...prev];
+    });
   };
 
   // Delete a PTE score entry
@@ -97,13 +145,19 @@ export default function App() {
     setEntries([]);
   };
 
-  // Add detailed score analysis question item
+  // Add detailed score analysis question item (manual, standalone entry)
   const handleAddDetail = (newDetail: Omit<QuestionDetail, 'id'>) => {
     const detailWithId: QuestionDetail = {
       ...newDetail,
       id: generateId('qdetail'),
+      completed: true,
     };
     setQuestionDetails(prev => [detailWithId, ...prev]);
+  };
+
+  // Fill in results for an auto-generated pending Score Analysis item
+  const handleUpdateDetail = (id: string, updates: Pick<QuestionDetail, 'contribute' | 'correctness' | 'notas'>) => {
+    setQuestionDetails(prev => prev.map(d => d.id === id ? { ...d, ...updates, completed: true } : d));
   };
 
   // Delete detailed score analysis question item
@@ -250,6 +304,7 @@ export default function App() {
               questionDetails={questionDetails}
               questionTypes={questionTypes}
               onAddDetail={handleAddDetail}
+              onUpdateDetail={handleUpdateDetail}
               onDeleteDetail={handleDeleteDetail}
               onDeleteAllDetails={handleDeleteAllDetails}
             />
@@ -257,7 +312,7 @@ export default function App() {
 
           {activeTab === 'bandas' && (
             <DetalleBandas
-              questionDetails={questionDetails}
+              questionDetails={questionDetails.filter(d => d.completed !== false)}
               questionTypes={questionTypes}
             />
           )}

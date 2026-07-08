@@ -1,12 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { QuestionDetail, QuestionType } from '../types';
-import { Plus, Trash2, Filter, AlertCircle, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, Filter, AlertCircle, Sparkles, ChevronDown, ChevronUp, ClipboardList, Save } from 'lucide-react';
 import { formatLocalPlainDate } from './Dashboard';
 
 interface DetallePreguntasProps {
   questionDetails: QuestionDetail[];
   questionTypes: QuestionType[];
   onAddDetail: (detail: Omit<QuestionDetail, 'id'>) => void;
+  onUpdateDetail: (id: string, updates: Pick<QuestionDetail, 'contribute' | 'correctness' | 'notas'>) => void;
   onDeleteDetail: (id: string) => void;
   onDeleteAllDetails: () => void;
 }
@@ -22,6 +23,7 @@ export default function DetallePreguntas({
   questionDetails,
   questionTypes,
   onAddDetail,
+  onUpdateDetail,
   onDeleteDetail,
   onDeleteAllDetails,
 }: DetallePreguntasProps) {
@@ -50,6 +52,46 @@ export default function DetallePreguntas({
   // Filters state
   const [filterSkill, setFilterSkill] = useState<string>('all');
   const [filterItem, setFilterItem] = useState<string>('all');
+
+  // Local editable draft values for pending (auto-generated) items awaiting results
+  const [pendingEdits, setPendingEdits] = useState<Record<string, { contribute: string; correctness: string; notas: string }>>({});
+
+  const getPendingEdit = (d: QuestionDetail) => {
+    return pendingEdits[d.id] ?? {
+      contribute: d.contribute ? (d.contribute * 100).toFixed(1) : '',
+      correctness: '',
+      notas: d.notas || '',
+    };
+  };
+
+  const updatePendingEdit = (d: QuestionDetail, field: 'contribute' | 'correctness' | 'notas', value: string) => {
+    setPendingEdits(prev => ({
+      ...prev,
+      [d.id]: { ...getPendingEdit(d), [field]: value },
+    }));
+  };
+
+  const savePendingItem = (d: QuestionDetail): boolean => {
+    const draft = getPendingEdit(d);
+    const contr = parseFloat(draft.contribute);
+    const corr = parseFloat(draft.correctness);
+
+    if (isNaN(contr) || contr < 0 || contr > 100 || isNaN(corr) || corr < 0 || corr > 100) {
+      return false;
+    }
+
+    onUpdateDetail(d.id, {
+      contribute: contr / 100,
+      correctness: corr / 100,
+      notas: draft.notas.trim() || undefined,
+    });
+    setPendingEdits(prev => {
+      const next = { ...prev };
+      delete next[d.id];
+      return next;
+    });
+    return true;
+  };
 
   // Filtered question types based on chosen skill in FORM
   const formFilteredItems = useMemo(() => {
@@ -125,9 +167,10 @@ export default function DetallePreguntas({
     return questionTypes.filter(q => q.skill === filterSkill);
   }, [questionTypes, filterSkill]);
 
-  // Filtered and sorted historical details list
+  // Filtered and sorted historical details list (completed items only)
   const filteredDetails = useMemo(() => {
     return questionDetails
+      .filter(d => d.completed !== false)
       .filter(d => {
         const matchesSkill = filterSkill === 'all' || d.skill === filterSkill;
         const matchesItem = filterItem === 'all' || d.item === filterItem;
@@ -136,15 +179,160 @@ export default function DetallePreguntas({
       .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime() || b.id.localeCompare(a.id));
   }, [questionDetails, filterSkill, filterItem]);
 
+  // Auto-generated items still awaiting real results, grouped by the test that created them
+  const pendingGroups = useMemo(() => {
+    const pending = questionDetails
+      .filter(d => d.completed === false)
+      .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime() || (a.entryId || '').localeCompare(b.entryId || ''));
+
+    const groups = new Map<string, QuestionDetail[]>();
+    pending.forEach(d => {
+      const key = d.entryId || 'sin-test';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(d);
+    });
+    return Array.from(groups.values());
+  }, [questionDetails]);
+
   return (
     <div className="space-y-8">
       {/* Intro */}
       <div>
         <h2 className="text-2xl font-light font-serif text-white tracking-wide">Análisis Detallado por Pregunta (Score Analysis)</h2>
         <p className="text-xs text-subtext font-light mt-1">
-          Registra el detalle de ítems de tu reporte de resultados de APEUni para medir tu logro fino respecto a las metas específicas de cada tipo de pregunta.
+          Al registrar un test en "Registro de Scores", sus preguntas aparecen automáticamente aquí abajo. Solo completa el % de logro de tu reporte de APEUni para cada una.
         </p>
       </div>
+
+      {/* Auto-generated items awaiting real results, grouped by their source test */}
+      {pendingGroups.length > 0 && (
+        <div className="bg-card-dark rounded-sm border border-gold/30 overflow-hidden animate-fade-in">
+          <div className="p-5 border-b border-border-dark bg-gold/5 flex items-start gap-3">
+            <ClipboardList className="text-gold shrink-0 mt-0.5" size={18} />
+            <div>
+              <h3 className="font-serif font-light text-white text-md tracking-wide">Pendientes de Completar</h3>
+              <p className="text-[11px] text-subtext font-light mt-0.5">
+                Se generaron automáticamente desde tus registros de test. Ingresa el % de Correctness de cada ítem según tu reporte de APEUni y guárdalos.
+              </p>
+            </div>
+          </div>
+
+          <div className="divide-y divide-border-dark">
+            {pendingGroups.map(group => {
+              const first = group[0];
+              const skillColor = SKILL_COLORS[first.skill] || '#C5A059';
+              return (
+                <div key={first.entryId || first.id} className="p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm border"
+                        style={{ backgroundColor: `${skillColor}15`, color: skillColor, borderColor: `${skillColor}30` }}
+                      >
+                        {first.skill}
+                      </span>
+                      <span className="font-serif font-light text-white text-sm">{first.entryDetalle || 'Test sin nombre'}</span>
+                      <span className="text-[11px] text-subtext font-light">{formatLocalPlainDate(first.fecha)}</span>
+                      <span className="text-[10px] text-subtext/70 font-light">({group.length} ítems)</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const remaining = group.filter(d => !savePendingItem(d));
+                        if (remaining.length === group.length) {
+                          alert('Completa al menos el % de Correctness de un ítem para guardar.');
+                        }
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-gold/10 hover:bg-gold/20 text-gold border border-gold/30 rounded-sm text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer"
+                    >
+                      <Save size={13} /> Guardar Completados
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {group.map(d => {
+                      const itemType = questionTypes.find(q => q.code === d.item);
+                      const draft = getPendingEdit(d);
+                      return (
+                        <div key={d.id} className="flex flex-wrap items-center gap-3 bg-[#0d0d0d] p-3 rounded-sm border border-border-dark">
+                          <div className="flex items-center gap-2 min-w-[160px]">
+                            <span className="font-mono bg-[#111] border border-border-dark px-1.5 py-0.5 rounded-sm text-gold text-xs font-semibold">
+                              {d.item}
+                            </span>
+                            <span className="text-xs text-subtext font-light truncate" title={itemType?.name}>
+                              {itemType?.name}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <label className="text-[10px] text-subtext uppercase font-bold">Contrib.</label>
+                            <div className="relative">
+                              <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max="100"
+                                value={draft.contribute}
+                                onChange={(e) => updatePendingEdit(d, 'contribute', e.target.value)}
+                                className="w-20 pl-2 pr-5 py-1.5 bg-[#090909] text-white border border-border-dark rounded-sm text-xs focus:outline-hidden focus:border-gold text-right font-semibold"
+                              />
+                              <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-subtext">%</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <label className="text-[10px] text-gold uppercase font-bold">Correctness</label>
+                            <div className="relative">
+                              <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max="100"
+                                placeholder="Ej: 18.2"
+                                value={draft.correctness}
+                                onChange={(e) => updatePendingEdit(d, 'correctness', e.target.value)}
+                                className="w-20 pl-2 pr-5 py-1.5 bg-[#12120d] border border-gold/30 focus:border-gold rounded-sm text-xs focus:outline-hidden text-right font-bold text-gold"
+                              />
+                              <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-gold">%</span>
+                            </div>
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Notas (opcional)"
+                            value={draft.notas}
+                            onChange={(e) => updatePendingEdit(d, 'notas', e.target.value)}
+                            className="flex-1 min-w-[120px] px-2.5 py-1.5 bg-[#090909] text-white border border-border-dark rounded-sm text-xs focus:outline-hidden focus:border-gold placeholder-[#444]"
+                          />
+                          <div className="flex items-center gap-1 ml-auto">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!savePendingItem(d)) {
+                                  alert('Completa el % de Correctness (0-100) para guardar este ítem.');
+                                }
+                              }}
+                              className="p-1.5 text-gold hover:bg-gold/10 rounded-sm transition-all cursor-pointer"
+                              title="Guardar ítem"
+                            >
+                              <Save size={15} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onDeleteDetail(d.id)}
+                              className="p-1.5 text-[#555] hover:text-rose-500 rounded-sm hover:bg-rose-950/20 transition-all cursor-pointer"
+                              title="Descartar ítem"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Main Layout: Left Form, Right catalog/instructions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -153,8 +341,11 @@ export default function DetallePreguntas({
         <div className="lg:col-span-2 bg-card-dark p-6 rounded-sm border border-border-dark">
           <h3 className="font-serif font-light text-white text-md tracking-wide flex items-center gap-2 mb-6 pb-4 border-b border-border-dark">
             <Plus className="text-gold" size={18} />
-            Cargar Ítem de Score Analysis
+            Agregar Ítem Manualmente (Opcional)
           </h3>
+          <p className="text-[11px] text-subtext font-light -mt-4 mb-6">
+            Úsalo solo para ítems sueltos que no vinieron de un test registrado. Si ya registraste un simulacro o sección, sus ítems aparecen arriba en "Pendientes de Completar".
+          </p>
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
