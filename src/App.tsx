@@ -135,6 +135,11 @@ export default function App() {
     });
   };
 
+  // Edit an existing PTE score entry
+  const handleUpdateEntry = (id: string, updates: Omit<PTEEntry, 'id'>) => {
+    setEntries(prev => prev.map(e => e.id === id ? { ...updates, id } : e));
+  };
+
   // Delete a PTE score entry
   const handleDeleteEntry = (id: string) => {
     setEntries(prev => prev.filter(e => e.id !== id));
@@ -295,6 +300,7 @@ export default function App() {
               questionTypes={questionTypes}
               onAddEntry={handleAddEntry}
               onAddMultipleEntries={handleAddMultipleEntries}
+              onUpdateEntry={handleUpdateEntry}
               onDeleteEntry={handleDeleteEntry}
               onGoToAnalysis={() => setActiveTab('preguntas')}
             />

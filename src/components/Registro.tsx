@@ -1,7 +1,7 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { PTEEntry, SkillTargets, QuestionType } from '../types';
-import { Plus, Trash2, SlidersHorizontal, BookOpen, AlertCircle, Sparkles, ClipboardList, X } from 'lucide-react';
+import { Plus, Trash2, SlidersHorizontal, BookOpen, AlertCircle, Sparkles, ClipboardList, X, Pencil, Save } from 'lucide-react';
 import { formatLocalPlainDate } from './Dashboard';
 
 interface RegistroProps {
@@ -10,6 +10,7 @@ interface RegistroProps {
   questionTypes: QuestionType[];
   onAddEntry: (entry: Omit<PTEEntry, 'id'>) => void;
   onAddMultipleEntries: (entries: Array<Omit<PTEEntry, 'id'>>) => void;
+  onUpdateEntry: (id: string, updates: Omit<PTEEntry, 'id'>) => void;
   onDeleteEntry: (id: string) => void;
   onGoToAnalysis: () => void;
 }
@@ -28,6 +29,7 @@ export default function Registro({
   questionTypes,
   onAddEntry,
   onAddMultipleEntries,
+  onUpdateEntry,
   onDeleteEntry,
   onGoToAnalysis,
 }: RegistroProps) {
@@ -69,6 +71,44 @@ export default function Registro({
     const set = new Set(entries.map(e => e.detalle).filter(Boolean));
     return Array.from(set).slice(0, 5);
   }, [entries]);
+
+  // Inline editing of an existing entry in the historial table
+  const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
+  const [editEntryDraft, setEditEntryDraft] = useState<Omit<PTEEntry, 'id'>>({
+    fecha: '', tipo: 'Section Test', skill: 'Overall', detalle: '', puntaje: 0, notas: '',
+  });
+
+  const startEditEntry = (entry: PTEEntry) => {
+    setEditingEntryId(entry.id);
+    setEditEntryDraft({
+      fecha: entry.fecha,
+      tipo: entry.tipo,
+      skill: entry.skill,
+      detalle: entry.detalle,
+      puntaje: entry.puntaje,
+      notas: entry.notas || '',
+    });
+  };
+
+  const cancelEditEntry = () => setEditingEntryId(null);
+
+  const saveEditEntry = (id: string) => {
+    const parsedPuntaje = Number(editEntryDraft.puntaje);
+    if (!editEntryDraft.fecha || !editEntryDraft.detalle) {
+      alert('Por favor, ingresa la fecha y el detalle del test.');
+      return;
+    }
+    if (isNaN(parsedPuntaje) || parsedPuntaje < 10 || parsedPuntaje > 90) {
+      alert('El puntaje PTE debe estar entre 10 y 90.');
+      return;
+    }
+    onUpdateEntry(id, {
+      ...editEntryDraft,
+      puntaje: parsedPuntaje,
+      notas: (editEntryDraft.notas || '').trim() || undefined,
+    });
+    setEditingEntryId(null);
+  };
 
   // Handle Quick Add Single Entry
   const handleSingleSubmit = (e: React.FormEvent) => {
@@ -534,27 +574,84 @@ export default function Registro({
                   const diff = target !== null ? e.puntaje - target : null;
                   const color = SKILL_COLORS[e.skill] || '#C5A059';
 
+                  const isEditing = editingEntryId === e.id;
+
                   return (
                     <tr key={e.id} className="hover:bg-bg-dark/40 transition-colors">
                       <td className="py-3.5 px-4 whitespace-nowrap text-xs text-subtext">
-                        {formatLocalPlainDate(e.fecha)}
+                        {isEditing ? (
+                          <input
+                            type="date"
+                            value={editEntryDraft.fecha}
+                            onChange={(ev) => setEditEntryDraft(prev => ({ ...prev, fecha: ev.target.value }))}
+                            className="w-36 px-2 py-1 bg-[#090909] text-white border border-border-dark rounded-sm text-xs focus:outline-hidden focus:border-gold"
+                          />
+                        ) : (
+                          formatLocalPlainDate(e.fecha)
+                        )}
                       </td>
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span 
-                          className="text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-sm border inline-block text-center shadow-xs min-w-[75px]"
-                          style={{ backgroundColor: `${color}15`, color: color, borderColor: `${color}30` }}
-                        >
-                          {e.skill}
-                        </span>
+                        {isEditing ? (
+                          <select
+                            value={editEntryDraft.skill}
+                            onChange={(ev) => setEditEntryDraft(prev => ({ ...prev, skill: ev.target.value as PTEEntry['skill'] }))}
+                            className="px-2 py-1 bg-[#090909] text-white border border-border-dark rounded-sm text-xs focus:outline-hidden focus:border-gold cursor-pointer"
+                          >
+                            <option value="Overall">Overall</option>
+                            <option value="Listening">Listening</option>
+                            <option value="Reading">Reading</option>
+                            <option value="Speaking">Speaking</option>
+                            <option value="Writing">Writing</option>
+                          </select>
+                        ) : (
+                          <span
+                            className="text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-sm border inline-block text-center shadow-xs min-w-[75px]"
+                            style={{ backgroundColor: `${color}15`, color: color, borderColor: `${color}30` }}
+                          >
+                            {e.skill}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3.5 px-4 whitespace-nowrap text-xs text-subtext font-light">
-                        {e.tipo}
+                        {isEditing ? (
+                          <select
+                            value={editEntryDraft.tipo}
+                            onChange={(ev) => setEditEntryDraft(prev => ({ ...prev, tipo: ev.target.value as PTEEntry['tipo'] }))}
+                            className="px-2 py-1 bg-[#090909] text-white border border-border-dark rounded-sm text-xs focus:outline-hidden focus:border-gold cursor-pointer"
+                          >
+                            <option value="Full Test">Full Test</option>
+                            <option value="Section Test">Section Test</option>
+                            <option value="Question Test">Question Test</option>
+                          </select>
+                        ) : (
+                          e.tipo
+                        )}
                       </td>
                       <td className="py-3.5 px-4 font-serif font-light text-[#E5E5E5] text-md">
-                        {e.detalle}
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editEntryDraft.detalle}
+                            onChange={(ev) => setEditEntryDraft(prev => ({ ...prev, detalle: ev.target.value }))}
+                            className="w-full min-w-[160px] px-2 py-1 bg-[#090909] text-white border border-border-dark rounded-sm text-sm focus:outline-hidden focus:border-gold"
+                          />
+                        ) : (
+                          e.detalle
+                        )}
                       </td>
                       <td className="py-3.5 px-4 text-center font-serif font-light text-white text-base">
-                        {e.puntaje}
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            min="10"
+                            max="90"
+                            value={editEntryDraft.puntaje}
+                            onChange={(ev) => setEditEntryDraft(prev => ({ ...prev, puntaje: ev.target.value === '' ? 0 : Number(ev.target.value) }))}
+                            className="w-16 px-2 py-1 bg-[#090909] text-white border border-border-dark rounded-sm text-sm text-center focus:outline-hidden focus:border-gold"
+                          />
+                        ) : (
+                          e.puntaje
+                        )}
                       </td>
                       <td className="py-3.5 px-4 text-center">
                         {target !== null ? (
@@ -586,21 +683,58 @@ export default function Registro({
                           <span className="text-[#333]">-</span>
                         )}
                       </td>
-                      <td className="py-3.5 px-4 text-xs text-subtext max-w-xs truncate font-light" title={e.notas}>
-                        {e.notas || '-'}
+                      <td className="py-3.5 px-4 text-xs text-subtext max-w-xs font-light">
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editEntryDraft.notas || ''}
+                            onChange={(ev) => setEditEntryDraft(prev => ({ ...prev, notas: ev.target.value }))}
+                            className="w-full min-w-[120px] px-2 py-1 bg-[#090909] text-white border border-border-dark rounded-sm text-xs focus:outline-hidden focus:border-gold"
+                          />
+                        ) : (
+                          <span className="truncate block" title={e.notas}>{e.notas || '-'}</span>
+                        )}
                       </td>
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                        <button
-                          onClick={() => {
-                            if (confirm('¿Estás seguro de que deseas eliminar este registro?')) {
-                              onDeleteEntry(e.id);
-                            }
-                          }}
-                          className="p-1.5 text-[#555] hover:text-rose-500 rounded-sm hover:bg-rose-950/20 transition-all cursor-pointer"
-                          title="Eliminar registro"
-                        >
-                          <Trash2 size={15} />
-                        </button>
+                        {isEditing ? (
+                          <div className="flex items-center gap-1 justify-end">
+                            <button
+                              onClick={() => saveEditEntry(e.id)}
+                              className="p-1.5 text-gold hover:bg-gold/10 rounded-sm transition-all cursor-pointer"
+                              title="Guardar cambios"
+                            >
+                              <Save size={15} />
+                            </button>
+                            <button
+                              onClick={cancelEditEntry}
+                              className="p-1.5 text-[#555] hover:text-white rounded-sm hover:bg-border-dark transition-all cursor-pointer"
+                              title="Cancelar"
+                            >
+                              <X size={15} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 justify-end">
+                            <button
+                              onClick={() => startEditEntry(e)}
+                              className="p-1.5 text-[#555] hover:text-gold rounded-sm hover:bg-gold/10 transition-all cursor-pointer"
+                              title="Editar registro"
+                            >
+                              <Pencil size={15} />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm('¿Estás seguro de que deseas eliminar este registro?')) {
+                                  onDeleteEntry(e.id);
+                                }
+                              }}
+                              className="p-1.5 text-[#555] hover:text-rose-500 rounded-sm hover:bg-rose-950/20 transition-all cursor-pointer"
+                              title="Eliminar registro"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );
