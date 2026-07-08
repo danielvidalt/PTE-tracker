@@ -25,6 +25,17 @@ const SKILL_COLORS: Record<string, string> = {
   Overall: '#C5A059',   // oro
 };
 
+// Returns today's date as YYYY-MM-DD using local calendar date components.
+// Date().toISOString() reports the UTC date instead, which rolls over to
+// "tomorrow" in the evening for any timezone behind UTC (e.g. Chile, Perú).
+export function getLocalDateString(): string {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function formatLocalPlainDate(dateStr: string): string {
   if (!dateStr) return '';
   const parts = dateStr.split('-');

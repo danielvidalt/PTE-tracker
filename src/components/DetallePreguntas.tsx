@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { QuestionDetail, QuestionType } from '../types';
 import { Plus, Trash2, Filter, AlertCircle, Sparkles, ChevronDown, ChevronUp, ClipboardList, Save, Pencil, X } from 'lucide-react';
-import { formatLocalPlainDate } from './Dashboard';
+import { formatLocalPlainDate, getLocalDateString } from './Dashboard';
 
 interface DetallePreguntasProps {
   questionDetails: QuestionDetail[];
@@ -38,7 +38,7 @@ export default function DetallePreguntas({
   onDeleteAllDetails,
 }: DetallePreguntasProps) {
   // Form states
-  const [fecha, setFecha] = useState(() => new Date().toISOString().split('T')[0]);
+  const [fecha, setFecha] = useState(() => getLocalDateString());
   const [selectedSkill, setSelectedSkill] = useState<'Listening' | 'Reading' | 'Speaking' | 'Writing'>('Speaking');
   const [selectedItem, setSelectedItem] = useState('');
   const [contributeInput, setContributeInput] = useState<string>('');

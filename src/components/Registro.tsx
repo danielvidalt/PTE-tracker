@@ -2,7 +2,7 @@ import React, { useRef, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { PTEEntry, SkillTargets, QuestionType } from '../types';
 import { Plus, Trash2, SlidersHorizontal, BookOpen, AlertCircle, Sparkles, ClipboardList, X, Pencil, Save } from 'lucide-react';
-import { formatLocalPlainDate } from './Dashboard';
+import { formatLocalPlainDate, getLocalDateString } from './Dashboard';
 
 interface RegistroProps {
   entries: PTEEntry[];
@@ -34,7 +34,7 @@ export default function Registro({
   onGoToAnalysis,
 }: RegistroProps) {
   // Form single entry state
-  const [fecha, setFecha] = useState(() => new Date().toISOString().split('T')[0]);
+  const [fecha, setFecha] = useState(() => getLocalDateString());
   const [tipo, setTipo] = useState<'Full Test' | 'Section Test' | 'Question Test'>('Full Test');
   const [skill, setSkill] = useState<'Overall' | 'Listening' | 'Reading' | 'Speaking' | 'Writing'>('Overall');
   const [detalle, setDetalle] = useState('');
