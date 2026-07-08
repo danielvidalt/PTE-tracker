@@ -93,6 +93,11 @@ export default function App() {
     setEntries(prev => prev.filter(e => e.id !== id));
   };
 
+  // Delete ALL PTE score entries
+  const handleDeleteAllEntries = () => {
+    setEntries([]);
+  };
+
   // Add detailed score analysis question item
   const handleAddDetail = (newDetail: Omit<QuestionDetail, 'id'>) => {
     const detailWithId: QuestionDetail = {
@@ -252,6 +257,7 @@ export default function App() {
               onAddEntry={handleAddEntry}
               onAddMultipleEntries={handleAddMultipleEntries}
               onDeleteEntry={handleDeleteEntry}
+              onDeleteAllEntries={handleDeleteAllEntries}
             />
           )}
 
