@@ -1,0 +1,6 @@
+{
+  "name": "PTE Progress Tracker",
+  "description": "Aplicación web para preparar y llevar el registro de progreso y avance del examen PTE para la visa sponsor 482 de Australia.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
