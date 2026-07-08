@@ -111,6 +111,11 @@ export default function App() {
     setQuestionDetails(prev => prev.filter(d => d.id !== id));
   };
 
+  // Delete ALL detailed score analysis question items
+  const handleDeleteAllDetails = () => {
+    setQuestionDetails([]);
+  };
+
   // Save/Update main targets & dates
   const handleUpdateTargets = (updatedTargets: SkillTargets) => {
     setSkillTargets(updatedTargets);
@@ -263,6 +268,7 @@ export default function App() {
               onUpdateTargets={handleUpdateTargets}
               onUpdateQuestionTypes={handleUpdateQuestionTypes}
               onDeleteAllEntries={handleDeleteAllEntries}
+              onDeleteAllDetails={handleDeleteAllDetails}
               entries={entries}
               questionDetails={questionDetails}
             />

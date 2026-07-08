@@ -8,6 +8,7 @@ interface ConfiguracionProps {
   onUpdateTargets: (targets: SkillTargets) => void;
   onUpdateQuestionTypes: (types: QuestionType[]) => void;
   onDeleteAllEntries: () => void;
+  onDeleteAllDetails: () => void;
   entries: PTEEntry[];
   questionDetails: QuestionDetail[];
 }
@@ -76,6 +77,7 @@ export default function Configuracion({
   onUpdateTargets,
   onUpdateQuestionTypes,
   onDeleteAllEntries,
+  onDeleteAllDetails,
   entries,
   questionDetails,
 }: ConfiguracionProps) {
@@ -176,6 +178,12 @@ export default function Configuracion({
   const handleDeleteAllClick = () => {
     if (confirm(`¿Estás seguro de eliminar los ${entries.length} registro(s) de score? Esta acción no se puede deshacer.`)) {
       onDeleteAllEntries();
+    }
+  };
+
+  const handleDeleteAllDetailsClick = () => {
+    if (confirm(`¿Estás seguro de eliminar los ${questionDetails.length} desglose(s) del historial? Esta acción no se puede deshacer.`)) {
+      onDeleteAllDetails();
     }
   };
 
@@ -461,6 +469,19 @@ export default function Configuracion({
             >
               <Trash2 size={14} /> Borrar Todos los Registros
             </button>
+
+            <div className="pt-4 border-t border-border-dark space-y-3">
+              <p className="text-xs text-subtext font-light leading-relaxed">
+                ¿Quieres eliminar permanentemente el historial de desglose de Score Analysis (Items)? Esta acción no se puede deshacer.
+              </p>
+              <button
+                onClick={handleDeleteAllDetailsClick}
+                disabled={questionDetails.length === 0}
+                className="w-full bg-rose-500/5 hover:bg-rose-500/10 disabled:opacity-40 disabled:cursor-not-allowed text-rose-400 py-2.5 px-4 rounded-sm text-xs font-bold uppercase tracking-wider transition-all duration-300 border border-rose-500/20 hover:border-rose-500/40 cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <Trash2 size={14} /> Borrar Historial de Desglose
+              </button>
+            </div>
           </div>
 
           {/* PTE vs IELTS Equivalence Card */}
