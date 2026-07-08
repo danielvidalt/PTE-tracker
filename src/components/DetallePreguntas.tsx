@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { QuestionDetail, QuestionType } from '../types';
-import { Plus, Trash2, Filter, AlertCircle, Sparkles, ChevronDown, ChevronUp, ClipboardList, Save } from 'lucide-react';
+import { Plus, Trash2, Filter, AlertCircle, Sparkles, ChevronDown, ChevronUp, ClipboardList, Save, Pencil, X } from 'lucide-react';
 import { formatLocalPlainDate } from './Dashboard';
 
 interface DetallePreguntasProps {
@@ -101,6 +101,36 @@ export default function DetallePreguntas({
       return next;
     });
     return true;
+  };
+
+  // Inline editing of an already-completed historical item
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<{ contribute: string; correctness: string; notas: string }>({ contribute: '', correctness: '', notas: '' });
+
+  const startEdit = (d: QuestionDetail) => {
+    setEditingId(d.id);
+    setEditDraft({
+      contribute: (d.contribute * 100).toFixed(1),
+      correctness: (d.correctness * 100).toFixed(1),
+      notas: d.notas || '',
+    });
+  };
+
+  const cancelEdit = () => setEditingId(null);
+
+  const saveEdit = (id: string) => {
+    const contr = parseFloat(editDraft.contribute);
+    const corr = parseFloat(editDraft.correctness);
+    if (isNaN(contr) || contr < 0 || contr > 100 || isNaN(corr) || corr < 0 || corr > 100) {
+      alert('La Contribución y el Correctness deben ser porcentajes válidos entre 0% y 100%.');
+      return;
+    }
+    onUpdateDetail(id, {
+      contribute: contr / 100,
+      correctness: corr / 100,
+      notas: editDraft.notas.trim() || undefined,
+    });
+    setEditingId(null);
   };
 
   // Filtered question types based on chosen skill in FORM
@@ -655,10 +685,40 @@ export default function DetallePreguntas({
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-center font-medium font-serif text-[#E5E5E5]">
-                        {(d.contribute * 100).toFixed(1)}%
+                        {editingId === d.id ? (
+                          <div className="relative inline-block">
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max="100"
+                              value={editDraft.contribute}
+                              onChange={(e) => setEditDraft(prev => ({ ...prev, contribute: e.target.value }))}
+                              className="w-20 pl-2 pr-5 py-1 bg-[#090909] text-white border border-border-dark rounded-sm text-xs focus:outline-hidden focus:border-gold text-right font-semibold"
+                            />
+                            <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-subtext">%</span>
+                          </div>
+                        ) : (
+                          `${(d.contribute * 100).toFixed(1)}%`
+                        )}
                       </td>
                       <td className="py-3.5 px-4 text-center font-bold font-serif text-gold bg-gold/5">
-                        {(d.correctness * 100).toFixed(1)}%
+                        {editingId === d.id ? (
+                          <div className="relative inline-block">
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max="100"
+                              value={editDraft.correctness}
+                              onChange={(e) => setEditDraft(prev => ({ ...prev, correctness: e.target.value }))}
+                              className="w-20 pl-2 pr-5 py-1 bg-[#12120d] border border-gold/30 focus:border-gold rounded-sm text-xs focus:outline-hidden text-right font-bold text-gold"
+                            />
+                            <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-gold">%</span>
+                          </div>
+                        ) : (
+                          `${(d.correctness * 100).toFixed(1)}%`
+                        )}
                       </td>
                       <td className="py-3.5 px-4 text-center">
                         {target !== null ? (
@@ -692,17 +752,54 @@ export default function DetallePreguntas({
                           {status.label}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-xs text-subtext max-w-xs truncate font-light" title={d.notas}>
-                        {d.notas || '-'}
+                      <td className="py-3.5 px-4 text-xs text-subtext max-w-xs font-light">
+                        {editingId === d.id ? (
+                          <input
+                            type="text"
+                            value={editDraft.notas}
+                            onChange={(e) => setEditDraft(prev => ({ ...prev, notas: e.target.value }))}
+                            className="w-full px-2 py-1 bg-[#090909] text-white border border-border-dark rounded-sm text-xs focus:outline-hidden focus:border-gold placeholder-[#444]"
+                          />
+                        ) : (
+                          <span className="truncate block" title={d.notas}>{d.notas || '-'}</span>
+                        )}
                       </td>
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                        <button
-                          onClick={() => onDeleteDetail(d.id)}
-                          className="p-1.5 text-[#555] hover:text-rose-500 rounded-sm hover:bg-rose-950/20 transition-all cursor-pointer"
-                          title="Eliminar ítem"
-                        >
-                          <Trash2 size={15} />
-                        </button>
+                        {editingId === d.id ? (
+                          <div className="flex items-center gap-1 justify-end">
+                            <button
+                              onClick={() => saveEdit(d.id)}
+                              className="p-1.5 text-gold hover:bg-gold/10 rounded-sm transition-all cursor-pointer"
+                              title="Guardar cambios"
+                            >
+                              <Save size={15} />
+                            </button>
+                            <button
+                              onClick={cancelEdit}
+                              className="p-1.5 text-[#555] hover:text-white rounded-sm hover:bg-border-dark transition-all cursor-pointer"
+                              title="Cancelar"
+                            >
+                              <X size={15} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 justify-end">
+                            <button
+                              onClick={() => startEdit(d)}
+                              className="p-1.5 text-[#555] hover:text-gold rounded-sm hover:bg-gold/10 transition-all cursor-pointer"
+                              title="Editar ítem"
+                            >
+                              <Pencil size={15} />
+                            </button>
+                            <button
+                              onClick={() => onDeleteDetail(d.id)}
+                              className="p-1.5 text-[#555] hover:text-rose-500 rounded-sm hover:bg-rose-950/20 transition-all cursor-pointer"
+                              title="Eliminar ítem"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );
