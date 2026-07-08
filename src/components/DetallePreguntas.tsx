@@ -207,8 +207,11 @@ export default function DetallePreguntas({
     return questionTypes.filter(q => q.skill === filterSkill);
   }, [questionTypes, filterSkill]);
 
-  // Filtered and sorted historical details list (completed items only)
+  // Filtered historical details list (completed items only), grouped by item so every
+  // past record of the same question type sits together and can actually be compared —
+  // a plain date-desc sort buries older records under whichever test was registered last.
   const filteredDetails = useMemo(() => {
+    const itemOrder = new Map(questionTypes.map((q, index) => [q.code, index]));
     return questionDetails
       .filter(d => d.completed !== false)
       .filter(d => {
@@ -216,8 +219,12 @@ export default function DetallePreguntas({
         const matchesItem = filterItem === 'all' || d.item === filterItem;
         return matchesSkill && matchesItem;
       })
-      .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime() || b.id.localeCompare(a.id));
-  }, [questionDetails, filterSkill, filterItem]);
+      .sort((a, b) => {
+        const orderDiff = (itemOrder.get(a.item) ?? 999) - (itemOrder.get(b.item) ?? 999);
+        if (orderDiff !== 0) return orderDiff;
+        return new Date(b.fecha).getTime() - new Date(a.fecha).getTime() || b.id.localeCompare(a.id);
+      });
+  }, [questionDetails, questionTypes, filterSkill, filterItem]);
 
   // Auto-generated items still awaiting real results, grouped by the test that created them
   const pendingGroups = useMemo(() => {
@@ -659,15 +666,16 @@ export default function DetallePreguntas({
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-dark text-sm">
-                {filteredDetails.map(d => {
+                {filteredDetails.map((d, index) => {
                   const itemType = questionTypes.find(q => q.code === d.item);
                   const target = itemType ? itemType.target : null;
                   const diff = target !== null ? d.correctness - target : null;
                   const status = getStatus(d.correctness, target);
                   const skillColor = SKILL_COLORS[d.skill] || '#C5A059';
+                  const isNewItemGroup = index > 0 && filteredDetails[index - 1].item !== d.item;
 
                   return (
-                    <tr key={d.id} className="hover:bg-bg-dark/40 transition-colors">
+                    <tr key={d.id} className={`hover:bg-bg-dark/40 transition-colors ${isNewItemGroup ? 'border-t-2 border-t-gold/20' : ''}`}>
                       <td className="py-3.5 px-4 text-xs text-subtext whitespace-nowrap">
                         {formatLocalPlainDate(d.fecha)}
                       </td>
